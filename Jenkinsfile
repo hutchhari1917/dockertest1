@@ -13,6 +13,7 @@ pipeline {
 			steps {
 				sh 'cd /var/lib/jenkins/workspace/pipeline2/dockertest1'
 				sh 'cp  /var/lib/jenkins/workspace/pipeline2/dockertest1/* /var/lib/jenkins/workspace/pipeline2'
+				sh 'docker rmi hutchhari1917/pipelinetest1:v1'
 				sh 'docker build -t hutchhari1917/pipelinetest1:v1 .'
 			}
 		}
@@ -25,15 +26,15 @@ pipeline {
 		
         stage('Deploy to Docker Host'){
 			steps {
-				
-				sh 'docker -H tcp://172.31.36.111:8080 run --rm -dit --name=webapp1 --hostname=webapp1 -p 8000:80 hutchhari1917/pipelinetest1:v1'
+				sh 'docker -H tcp://172.31.36.111:8080 stop webapp1'
+				sh 'docker -H tcp://172.31.36.111:8080 run --rm -dit --name=webapp1 --hostname=webapp1 -p 8081:80 hutchhari1917/pipelinetest1:v1'
 			}
 		}
 		
 	    stage('Check Webapp1 Rechability'){
 			steps {
 				sh 'sleep 10s'
-				sh 'curl http:/ec2-3-23-60-148.us-east-2.compute.amazonaws.com:8000'
+				sh 'curl http:/ec2-3-23-60-148.us-east-2.compute.amazonaws.com:8081'
 			}
 		}
 	}
