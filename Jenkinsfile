@@ -26,7 +26,7 @@ pipeline {
 		
         stage('Deploy to Docker Host'){
 			steps {
-				sh 'docker -H tcp://172.31.36.111:8080 stop webapp1
+				sh 'docker -H tcp://172.31.36.111:8080 stop webapp1'
 				sh 'docker -H tcp://172.31.36.111:8080 run --rm -dit --name=webapp1 --hostname=webapp1 -p 8000:80 hutchhari1917/pipelinetest1:v1'
 			}
 		}
