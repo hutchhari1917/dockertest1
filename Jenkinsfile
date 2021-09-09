@@ -1,49 +1,41 @@
 pipeline {
-    environment {
-        registry = 'sreeharshav/devopsb17'
-        registryCredential = 'dockerhub_id'
-        dockerSwarmManager = '10.40.1.26:2375'
-        dockerhost = '10.40.1.26'
-        dockerImage = ''
-    }
     agent any
-    stages {
-        stage('Cloning our Git') {
-            steps {
-                git 'https://github.com/mavrick202/dockertest1.git'
-            }
-        }
-        stage('Building our image') {
-            steps {
-                script {
-                    dockerImage = docker.build registry + ":v$BUILD_NUMBER"
-                }
-            }
-        }
-        stage('Push Image To DockerHUB') {
-            steps {
-                script {
-                    docker.withRegistry( '', registryCredential ) {
-                        dockerImage.push()
-                    }
-                }
-            }
-        }
-        stage('Cleaning up') {
-            steps {
-                sh "docker rmi $registry:v$BUILD_NUMBER"
-            }
-        }
-        stage('Deploying to Docker Swarm') {
-            steps {
-                sh "docker -H tcp://$dockerSwarmManager service rm testing1 || true"
-                sh "docker -H tcp://$dockerSwarmManager service create --name testing1 -p 8100:80 $registry:v$BUILD_NUMBER"
-            }
-        }
-        stage('Verifying The Deployment') {
-            steps {
-                sh 'curl http://$dockerhost:8100 || exit 1'
-                }
-        }
-    }
+	stages {
+	
+        stage('Clone Repository'){
+			steps {
+				sh 'rm -rf dockertest1'
+				sh 'git clone https://github.com/hutchhari1917/dockertest1.git'
+			}
+		}
+		
+		stage('Build Docker Image'){
+			steps {
+				sh 'cd /var/lib/jenkins/workspace/pipeline2/dockertest1'
+				sh 'cp  /var/lib/jenkins/workspace/pipeline2/dockertest1/* /var/lib/jenkins/workspace/pipeline2'
+				sh 'docker rmi hutchhari1917/pipelinetest1:v1'
+				sh 'docker build -t hutchhari1917/pipelinetest1:v1 .'
+			}
+		}
+		
+	    stage('Push Image to DockerHub'){
+			steps {
+				sh 'docker push hutchhari1917/pipelinetest1:v1'
+			}
+		}
+		
+        stage('Deploy to Docker Host'){
+			steps {
+				sh 'docker -H tcp://172.31.36.111:8080 stop webapp1'
+				sh 'docker -H tcp://172.31.36.111:8080 run --rm -dit --name=webapp1 --hostname=webapp1 -p 8000:80 hutchhari1917/pipelinetest1:v1'
+			}
+		}
+		
+	    stage('Check Webapp1 Rechability'){
+			steps {
+				sh 'sleep 10s'
+				sh 'curl http:/ec2-3-23-60-148.us-east-2.compute.amazonaws.com:8000'
+			}
+		}
+	}
 }
